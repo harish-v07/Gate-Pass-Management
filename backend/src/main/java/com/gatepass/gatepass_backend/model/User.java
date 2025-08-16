@@ -12,7 +12,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String username;
-    private String password; // Store hashed passwords in a real app
+    private String password;
     private String name;
-    private String role; // e.g., STUDENT, TUTOR, WARDEN, SECURITY
+    private String role;
+    private String email;
+    private String phone;
 }

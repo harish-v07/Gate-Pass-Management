@@ -3,7 +3,6 @@ package com.gatepass.gatepass_backend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "gate_pass_request")
 @Data
