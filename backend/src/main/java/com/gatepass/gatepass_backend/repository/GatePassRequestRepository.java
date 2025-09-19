@@ -2,14 +2,15 @@ package com.gatepass.gatepass_backend.repository;
 
 import com.gatepass.gatepass_backend.model.GatePassRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 import java.util.List;
 
+@Repository
 public interface GatePassRequestRepository extends JpaRepository<GatePassRequest, Long> {
-    // Modified methods to fetch requests assigned to a specific person
-    List<GatePassRequest> findByStatusAndTutorId(String status, Long tutorId);
-    List<GatePassRequest> findByStatusAndWardenId(String status, Long wardenId);
-    List<GatePassRequest> findByStudentId(Long studentId);
     List<GatePassRequest> findByStatus(String status);
-    List<GatePassRequest> findByTutorIdAndStatusIn(Long tutorId, List<String> statuses);
+    List<GatePassRequest> findByStudentId(Long studentId);
+    List<GatePassRequest> findByTutorIdAndStatus(Long tutorId, String status);
     List<GatePassRequest> findByWardenIdAndStatus(Long wardenId, String status);
+    List<GatePassRequest> findByTutorId(Long tutorId);
+    List<GatePassRequest> findByWardenId(Long wardenId);
 }

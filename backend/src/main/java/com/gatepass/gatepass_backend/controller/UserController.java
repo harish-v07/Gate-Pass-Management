@@ -1,31 +1,37 @@
 package com.gatepass.gatepass_backend.controller;
 
-import com.gatepass.gatepass_backend.model.User;
+import com.gatepass.gatepass_backend.dto.PasswordChangeRequest;
 import com.gatepass.gatepass_backend.dto.UserDto;
+import com.gatepass.gatepass_backend.model.User;
 import com.gatepass.gatepass_backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "*")
 public class UserController {
-
     @Autowired
     private UserService userService;
-
-    @PutMapping("/{id}/profile")
-    public ResponseEntity<User> updateUserProfile(@PathVariable Long id, @RequestBody User profileDetails) {
-        return userService.updateUserProfile(id, profileDetails)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
     @GetMapping("/role/{role}")
-    public ResponseEntity<List<UserDto>> getUsersByRole(@PathVariable String role) {
-        return ResponseEntity.ok(userService.findUsersByRole(role.toUpperCase()));
+    public ResponseEntity<List<UserDto>> getByRole(@PathVariable String role) {
+        return ResponseEntity.ok(userService.findByRole(role));
+    }
+    @PutMapping("/{id}/profile")
+    public ResponseEntity<?> updateProfile(@PathVariable Long id, @RequestBody User details) {
+        try {
+            return ResponseEntity.ok(userService.updateUserProfile(id, details));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    @PostMapping("/{id}/change-password")
+    public ResponseEntity<String> changePassword(@PathVariable Long id, @RequestBody PasswordChangeRequest r) {
+        try { userService.changePassword(id, r.getCurrentPassword(), r.getNewPassword());
+            return ResponseEntity.ok("Password changed successfully!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

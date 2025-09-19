@@ -1,90 +1,60 @@
 package com.gatepass.gatepass_backend.service;
-
 import com.gatepass.gatepass_backend.model.GatePassRequest;
 import com.gatepass.gatepass_backend.repository.GatePassRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class GatePassService {
-
     @Autowired
-    private GatePassRequestRepository requestRepository;
-
-    public GatePassRequest createRequest(GatePassRequest request) {
-        request.setStatus("PENDING_TUTOR_APPROVAL");
-        return requestRepository.save(request);
+    private GatePassRequestRepository gatePassRequestRepository;
+    public GatePassRequest createRequest(GatePassRequest r) {
+        r.setStatus("PENDING_TUTOR_APPROVAL");
+        return gatePassRequestRepository.save(r);
     }
-
-    public List<GatePassRequest> getPendingTutorRequests(Long tutorId) {
-        return requestRepository.findByStatusAndTutorId("PENDING_TUTOR_APPROVAL", tutorId);
+    public List<GatePassRequest> getRequestsByStatus(String s) {
+        return gatePassRequestRepository.findByStatus(s);
     }
-
-    public List<GatePassRequest> getPendingWardenRequests(Long wardenId) {
-        return requestRepository.findByStatusAndWardenId("PENDING_WARDEN_APPROVAL", wardenId);
+    public List<GatePassRequest> getPendingRequestsForTutor(Long id) {
+        return gatePassRequestRepository.findByTutorIdAndStatus(id, "PENDING_TUTOR_APPROVAL");
     }
-
-    public GatePassRequest approveRequest(Long requestId, String approverRole, Long approverId) {
-        GatePassRequest request = requestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
-
-        if ("TUTOR".equalsIgnoreCase(approverRole)) {
-            request.setStatus("PENDING_WARDEN_APPROVAL");
-            request.setTutorId(approverId);
-        } else if ("WARDEN".equalsIgnoreCase(approverRole)) {
-            request.setStatus("APPROVED");
-            request.setWardenId(approverId);
-        }
-        return requestRepository.save(request);
+    public List<GatePassRequest> getPendingRequestsForWarden(Long id) {
+        return gatePassRequestRepository.findByWardenIdAndStatus(id, "PENDING_WARDEN_APPROVAL");
     }
-
-    public GatePassRequest rejectRequest(Long requestId) {
-        GatePassRequest request = requestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
-        request.setStatus("REJECTED");
-        return requestRepository.save(request);
+    public List<GatePassRequest> getHistoryForTutor(Long id) {
+        return gatePassRequestRepository.findByTutorId(id).stream().filter(r -> !r.getStatus().equals("PENDING_TUTOR_APPROVAL")).collect(Collectors.toList());
     }
-
-    public List<GatePassRequest> getRequestsByStudentId(Long studentId) {
-        return requestRepository.findByStudentId(studentId);
+    public List<GatePassRequest> getHistoryForWarden(Long id) {
+        return gatePassRequestRepository.findByWardenId(id).stream().filter(r -> !r.getStatus().equals("PENDING_WARDEN_APPROVAL")).collect(Collectors.toList());
     }
-    public List<GatePassRequest> getRequestsByStatus(String status) {
-        return requestRepository.findByStatus(status);
+    public GatePassRequest approveRequest(Long id, String role) {
+        GatePassRequest r = gatePassRequestRepository.findById(id).orElseThrow();
+        if (role.equals("TUTOR"))
+            r.setStatus("PENDING_WARDEN_APPROVAL");
+        else if (role.equals("WARDEN"))
+            r.setStatus("APPROVED");
+        return gatePassRequestRepository.save(r);
     }
-    public void deleteRequest(Long requestId) {
-        GatePassRequest request = requestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Request not found with id: " + requestId));
-
-        // Optional: Add a rule that only pending requests can be deleted
-        if (!"PENDING_TUTOR_APPROVAL".equals(request.getStatus())) {
-            throw new RuntimeException("Only requests pending tutor approval can be deleted.");
-        }
-
-        requestRepository.delete(request);
+    public GatePassRequest rejectRequest(Long id) {
+        GatePassRequest r = gatePassRequestRepository.findById(id).orElseThrow();
+        r.setStatus("REJECTED"); return gatePassRequestRepository.save(r);
     }
-    public List<GatePassRequest> getTutorHistory(Long tutorId) {
-        return requestRepository.findByTutorIdAndStatusIn(tutorId, Arrays.asList("PENDING_WARDEN_APPROVAL", "APPROVED", "REJECTED"));
+    public GatePassRequest modifyApproval(Long id) {
+        GatePassRequest r = gatePassRequestRepository.findById(id).orElseThrow();
+        if (r.getStatus().equals("APPROVED"))
+            r.setStatus("PENDING_WARDEN_APPROVAL");
+        else if (r.getStatus().equals("PENDING_WARDEN_APPROVAL"))
+            r.setStatus("PENDING_TUTOR_APPROVAL");
+        return gatePassRequestRepository.save(r); }
+    public List<GatePassRequest> getRequestsByStudentId(Long id) {
+        return gatePassRequestRepository.findByStudentId(id);
     }
-
-    public List<GatePassRequest> getWardenHistory(Long wardenId) {
-        return requestRepository.findByWardenIdAndStatus(wardenId, "APPROVED");
-    }
-
-    // ** NEW METHOD FOR MODIFYING APPROVAL **
-    public GatePassRequest modifyApproval(Long requestId, String role) {
-        GatePassRequest request = requestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
-
-        if ("TUTOR".equalsIgnoreCase(role) && "PENDING_WARDEN_APPROVAL".equals(request.getStatus())) {
-            request.setStatus("PENDING_TUTOR_APPROVAL");
-        } else if ("WARDEN".equalsIgnoreCase(role) && "APPROVED".equals(request.getStatus())) {
-            request.setStatus("PENDING_WARDEN_APPROVAL");
-        } else {
-            throw new RuntimeException("This request status cannot be modified by you at this time.");
-        }
-        return requestRepository.save(request);
+    public void deleteRequest(Long id) {
+        GatePassRequest r = gatePassRequestRepository.findById(id).orElseThrow();
+        if (!"PENDING_TUTOR_APPROVAL".equals(r.getStatus()))
+            throw new IllegalStateException("Cannot delete a request that has already been processed.");
+        gatePassRequestRepository.deleteById(id);
     }
 }

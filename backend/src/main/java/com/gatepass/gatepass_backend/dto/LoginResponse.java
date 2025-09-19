@@ -1,17 +1,14 @@
 package com.gatepass.gatepass_backend.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class LoginResponse {
     private Long id;
     private String name;
     private String role;
-    // In a real app, you would return a JWT token here
-
-    public LoginResponse(Long id, String name, String role) {
-        this.id = id;
-        this.name = name;
-        this.role = role;
-    }
+    private String email;
+    private String phone;
 }

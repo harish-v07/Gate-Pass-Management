@@ -7,33 +7,19 @@ import com.gatepass.gatepass_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*") // For development only
 public class AuthController {
-
-    @Autowired
-    private UserRepository userRepository;
-
+    @Autowired private UserRepository userRepository;
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        // Find the user by their username
-        Optional<User> userOptional = userRepository.findByUsername(loginRequest.getUsername());
-
-        // Check if the user exists and the password matches
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            if (user.getPassword().equals(loginRequest.getPassword())) {
-                // If credentials are correct, return user details with a 200 OK status
-                LoginResponse response = new LoginResponse(user.getId(), user.getName(), user.getRole());
-                return ResponseEntity.ok(response);
-            }
+    public ResponseEntity<?> login(@RequestBody LoginRequest r) {
+        Optional<User> uOpt = userRepository.findByUsername(r.getUsername());
+        if (uOpt.isPresent() && uOpt.get().getPassword().equals(r.getPassword())) {
+            User u = uOpt.get();
+            return ResponseEntity.ok(new LoginResponse(u.getId(), u.getName(), u.getRole(), u.getEmail(), u.getPhone()));
         }
-
-        // If user not found or password incorrect, return a 401 Unauthorized status
         return ResponseEntity.status(401).body("Invalid credentials");
     }
     // ** NEW METHOD FOR REGISTRATION **
