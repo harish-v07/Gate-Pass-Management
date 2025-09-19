@@ -22,18 +22,4 @@ public class AuthController {
         }
         return ResponseEntity.status(401).body("Invalid credentials");
     }
-    // ** NEW METHOD FOR REGISTRATION **
-    @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody User newUser) {
-        // Check if username already exists
-        if (userRepository.findByUsername(newUser.getUsername()).isPresent()) {
-            return ResponseEntity.status(400).body("Username is already taken!");
-        }
-
-        // In a real app, you should hash the password here before saving
-        // newUser.setPassword(passwordEncoder.encode(newUser.getPassword()));
-
-        User savedUser = userRepository.save(newUser);
-        return ResponseEntity.ok(savedUser);
-    }
 }
